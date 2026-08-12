@@ -1,120 +1,62 @@
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp 
-} from 'firebase/firestore';
-import { db } from '../firebase/config';
 import { WhitelistApplication, WhitelistStatus } from '../types';
-import { updateUserWhitelistStatus } from './userService';
-import { approveWhitelistOnGameServer, revokeWhitelistOnGameServer } from './gameServerService';
 
-const COLLECTION_NAME = 'whitelistApplications';
+const STORAGE_KEY = 'nexus_whitelist_apps';
+
+const getLocalApps = (): WhitelistApplication[] => {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+const saveLocalApps = (apps: WhitelistApplication[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(apps));
+};
 
 export const submitWhitelistApplication = async (
   data: Omit<WhitelistApplication, 'id' | 'status' | 'submittedAt'>
 ): Promise<string> => {
-  // Check if user already has a pending application
   const existingPending = await getUserPendingApplication(data.userId);
   if (existingPending) {
     throw new Error('You already have a pending application under review.');
   }
 
-  const appCol = collection(db, COLLECTION_NAME);
-  const docRef = await addDoc(appCol, {
+  const newApp: WhitelistApplication = {
     ...data,
-    status: 'pending' as WhitelistStatus,
-    submittedAt: serverTimestamp(),
-  });
+    id: 'app_' + Date.now(),
+    status: 'pending',
+    submittedAt: new Date().toISOString() as any,
+  };
 
-  // Also update user's profile whitelistStatus
-  await updateUserWhitelistStatus(data.userId, 'pending');
+  const apps = getLocalApps();
+  apps.push(newApp);
+  saveLocalApps(apps);
 
-  return docRef.id;
+  return newApp.id;
 };
 
 export const getUserPendingApplication = async (userId: string): Promise<WhitelistApplication | null> => {
-  try {
-    const appCol = collection(db, COLLECTION_NAME);
-    const q = query(
-      appCol, 
-      where('userId', '==', userId), 
-      where('status', '==', 'pending')
-    );
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      const docSnap = snap.docs[0];
-      return { id: docSnap.id, ...docSnap.data() } as WhitelistApplication;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error checking pending application:', error);
-    return null;
-  }
+  const apps = getLocalApps();
+  return apps.find(a => a.userId === userId && a.status === 'pending') || null;
 };
 
 export const getUserLatestApplication = async (userId: string): Promise<WhitelistApplication | null> => {
-  try {
-    const appCol = collection(db, COLLECTION_NAME);
-    const q = query(
-      appCol, 
-      where('userId', '==', userId)
-    );
-    const snap = await getDocs(q);
-    if (snap.empty) return null;
-
-    // Client-side sort by submittedAt descending to guarantee order
-    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhitelistApplication));
-    list.sort((a, b) => {
-      const tA = a.submittedAt?.toDate ? a.submittedAt.toDate().getTime() : (a.submittedAt || 0);
-      const tB = b.submittedAt?.toDate ? b.submittedAt.toDate().getTime() : (b.submittedAt || 0);
-      return tB - tA;
-    });
-
-    return list[0] || null;
-  } catch (error) {
-    console.error('Error fetching user application:', error);
-    return null;
-  }
+  const apps = getLocalApps();
+  const userApps = apps.filter(a => a.userId === userId);
+  if (!userApps.length) return null;
+  return userApps.sort((a, b) => new Date(b.submittedAt as any).getTime() - new Date(a.submittedAt as any).getTime())[0];
 };
 
 export const getAllApplications = async (): Promise<WhitelistApplication[]> => {
-  try {
-    const appCol = collection(db, COLLECTION_NAME);
-    const snap = await getDocs(appCol);
-    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WhitelistApplication));
-    
-    list.sort((a, b) => {
-      const tA = a.submittedAt?.seconds ? a.submittedAt.seconds : (a.submittedAt ? new Date(a.submittedAt).getTime() : 0);
-      const tB = b.submittedAt?.seconds ? b.submittedAt.seconds : (b.submittedAt ? new Date(b.submittedAt).getTime() : 0);
-      return tB - tA;
-    });
-
-    return list;
-  } catch (error) {
-    console.error('Error fetching all applications:', error);
-    return [];
-  }
+  const apps = getLocalApps();
+  return apps.sort((a, b) => new Date(b.submittedAt as any).getTime() - new Date(a.submittedAt as any).getTime());
 };
 
 export const getApplicationById = async (id: string): Promise<WhitelistApplication | null> => {
-  try {
-    const docRef = doc(db, COLLECTION_NAME, id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as WhitelistApplication;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error fetching application by id:', error);
-    return null;
-  }
+  const apps = getLocalApps();
+  return apps.find(a => a.id === id) || null;
 };
 
 export const reviewApplication = async (
@@ -124,29 +66,18 @@ export const reviewApplication = async (
   reviewerName: string,
   adminNote?: string
 ): Promise<void> => {
-  const docRef = doc(db, COLLECTION_NAME, id);
-  const appSnap = await getDoc(docRef);
-  if (!appSnap.exists()) {
-    throw new Error('Application not found');
-  }
+  const apps = getLocalApps();
+  const appIndex = apps.findIndex(a => a.id === id);
+  if (appIndex === -1) throw new Error('Application not found');
 
-  const appData = { id: appSnap.id, ...appSnap.data() } as WhitelistApplication;
-
-  await updateDoc(docRef, {
+  apps[appIndex] = {
+    ...apps[appIndex],
     status,
-    reviewedAt: serverTimestamp(),
+    reviewedAt: new Date().toISOString() as any,
     reviewedBy: reviewerUid,
     reviewerName: reviewerName || 'Admin',
     adminNote: adminNote || (status === 'accepted' ? 'Welcome to the server!' : 'Application did not meet requirements.'),
-  });
+  };
 
-  // Update applicant user's whitelist status
-  await updateUserWhitelistStatus(appData.userId, status);
-
-  // Trigger optional game server integration hook
-  if (status === 'accepted') {
-    await approveWhitelistOnGameServer(appData);
-  } else {
-    await revokeWhitelistOnGameServer(appData);
-  }
+  saveLocalApps(apps);
 };

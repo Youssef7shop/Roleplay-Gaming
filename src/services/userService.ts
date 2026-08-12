@@ -1,29 +1,23 @@
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  serverTimestamp, 
-  collection, 
-  getDocs, 
-  query, 
-  where 
-} from 'firebase/firestore';
-import { db } from '../firebase/config';
 import { UserProfile, WhitelistStatus } from '../types';
 
-export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+const STORAGE_KEY = 'nexus_users';
+
+const getLocalUsers = (): Record<string, UserProfile> => {
   try {
-    const docRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data() as UserProfile;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-    return null;
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    return {};
   }
+};
+
+const saveLocalUsers = (users: Record<string, UserProfile>) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+};
+
+export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+  const users = getLocalUsers();
+  return users[uid] || null;
 };
 
 export const createUserProfileOnRegistration = async (
@@ -31,90 +25,71 @@ export const createUserProfileOnRegistration = async (
   email: string, 
   username: string
 ): Promise<UserProfile> => {
-  const userRef = doc(db, 'users', uid);
+  const users = getLocalUsers();
   
   const newProfile: UserProfile = {
     uid,
     username: username.trim(),
     displayName: username.trim(),
     email: email.toLowerCase().trim(),
-    role: 'player', // ALWAYS 'player' on registration
+    role: 'player',
     whitelistStatus: 'none',
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: new Date().toISOString() as any,
+    updatedAt: new Date().toISOString() as any,
   };
 
-  await setDoc(userRef, newProfile);
-  return {
-    ...newProfile,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  users[uid] = newProfile;
+  saveLocalUsers(users);
+
+  return newProfile;
 };
 
 export const checkHasAdmin = async (): Promise<boolean> => {
-  try {
-    const usersCol = collection(db, 'users');
-    const q = query(usersCol, where('role', '==', 'admin'));
-    const snap = await getDocs(q);
-    return !snap.empty;
-  } catch (error) {
-    console.error('Error checking admin presence:', error);
-    return false;
-  }
+  const users = Object.values(getLocalUsers());
+  return users.some(u => u.role === 'admin');
 };
 
 export const bootstrapFirstAdmin = async (uid: string): Promise<boolean> => {
-  try {
-    const hasAdmin = await checkHasAdmin();
-    if (hasAdmin) {
-      console.warn('Admin already exists. Bootstrap aborted.');
-      return false;
-    }
+  const hasAdmin = await checkHasAdmin();
+  if (hasAdmin) return false;
 
-    const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, {
-      role: 'admin',
-      updatedAt: serverTimestamp(),
-    });
+  const users = getLocalUsers();
+  if (users[uid]) {
+    users[uid].role = 'admin';
+    users[uid].updatedAt = new Date().toISOString() as any;
+    saveLocalUsers(users);
     return true;
-  } catch (error) {
-    console.error('Error bootstrapping first admin:', error);
-    return false;
   }
+  return false;
 };
 
 export const updateUserWhitelistStatus = async (uid: string, status: WhitelistStatus): Promise<void> => {
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, {
-    whitelistStatus: status,
-    updatedAt: serverTimestamp(),
-  });
-};
-
-export const getAllUsers = async (): Promise<UserProfile[]> => {
-  try {
-    const usersCol = collection(db, 'users');
-    const snap = await getDocs(usersCol);
-    return snap.docs.map(doc => doc.data() as UserProfile);
-  } catch (error) {
-    console.error('Error getting all users:', error);
-    return [];
+  const users = getLocalUsers();
+  if (users[uid]) {
+    users[uid].whitelistStatus = status;
+    users[uid].updatedAt = new Date().toISOString() as any;
+    saveLocalUsers(users);
   }
 };
 
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  return Object.values(getLocalUsers());
+};
+
 export const promoteUserToAdmin = async (uid: string): Promise<void> => {
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, {
-    role: 'admin',
-    updatedAt: serverTimestamp(),
-  });
+  const users = getLocalUsers();
+  if (users[uid]) {
+    users[uid].role = 'admin';
+    users[uid].updatedAt = new Date().toISOString() as any;
+    saveLocalUsers(users);
+  }
 };
 
 export const demoteAdminToPlayer = async (uid: string): Promise<void> => {
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, {
-    role: 'player',
-    updatedAt: serverTimestamp(),
-  });
+  const users = getLocalUsers();
+  if (users[uid]) {
+    users[uid].role = 'player';
+    users[uid].updatedAt = new Date().toISOString() as any;
+    saveLocalUsers(users);
+  }
 };
