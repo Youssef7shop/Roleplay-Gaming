@@ -89,6 +89,19 @@ export const Navbar: React.FC = () => {
                   <FileText className="h-4 w-4" />
                   Apply Whitelist
                 </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin-panel"
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-bold transition-all ${
+                      isActive('/admin-panel') 
+                        ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20' 
+                        : 'text-amber-500/70 hover:text-amber-400 hover:bg-amber-500/10'
+                    }`}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin Panel
+                  </Link>
+                )}
               </>
             )}
           </div>
@@ -191,6 +204,15 @@ export const Navbar: React.FC = () => {
               >
                 Profile Settings
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin-panel"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-base font-bold text-amber-500 hover:bg-amber-500/10"
+                >
+                  Admin Panel
+                </Link>
+              )}
 
               <button
                 onClick={() => {
