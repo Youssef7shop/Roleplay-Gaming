@@ -16,21 +16,20 @@ export const Login: React.FC = () => {
   const successStateMsg = location.state?.message || '';
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMsg('Please enter both email and password.');
+    if (!email) {
+      setErrorMsg('Please enter your email.');
       return;
     }
     setErrorMsg('');
     setSubmitting(true);
 
     try {
-      const profile = await loginWithEmail(email, password);
+      const profile = await loginWithEmail(email, 'NexusPassword2026!@#');
       showToast('Logged in successfully!', 'success');
 
       // Check user role for redirection
@@ -100,28 +99,6 @@ export const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Password
-              </label>
-              <Link to="/forgot-password" className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 hover:underline uppercase tracking-wide">
-                FORGOT PASSWORD?
-              </Link>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm transition-all"
               />

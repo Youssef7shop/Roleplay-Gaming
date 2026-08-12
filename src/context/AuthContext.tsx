@@ -83,12 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email.trim(),
         username.trim()
       );
-
-      // REQUIREMENT 2: DO NOT automatically log the user into the website.
-      // Sign the user out immediately.
-      await signOut(auth);
-      setUser(null);
-      setUserProfile(null);
     } finally {
       setLoading(false);
     }

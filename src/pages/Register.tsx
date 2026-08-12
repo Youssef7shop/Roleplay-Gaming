@@ -14,8 +14,6 @@ export const Register: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -31,36 +29,29 @@ export const Register: React.FC = () => {
       setErrorMsg('Valid email is required.');
       return;
     }
-    if (!password) {
-      setErrorMsg('Password is required.');
-      return;
-    }
-    if (password.length < 6) {
-      setErrorMsg('Password must be at least 6 characters long.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setErrorMsg('Passwords do not match.');
-      return;
-    }
 
     setSubmitting(true);
 
     try {
       const username = `${firstName.trim()} ${lastName.trim()}`;
-      await registerWithEmail(email, password, username);
+      await registerWithEmail(email, 'NexusPassword2026!@#', username);
       showToast('Account created successfully!', 'success');
       
-      // REQUIREMENT 2: Redirect to /login with state message
-      // User must NOT be automatically logged in.
-      navigate('/login', {
-        replace: true,
-        state: {
-          message: 'Account created successfully. Please login using your email and password.'
-        }
-      });
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Registration error:', err);
+      
+      if (err.code === 'auth/email-already-in-use') {
+        showToast('Account already exists! Redirecting to login...', 'info');
+        navigate('/login', {
+          replace: true,
+          state: {
+            message: 'An account with this email address already exists. Please log in.'
+          }
+        });
+        return;
+      }
+
       const friendlyMsg = getFriendlyAuthErrorMessage(err);
       setErrorMsg(friendlyMsg);
       showToast(friendlyMsg, 'error');
@@ -142,40 +133,6 @@ export const Register: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm transition-all"
               />
