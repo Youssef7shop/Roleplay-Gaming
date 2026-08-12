@@ -6,9 +6,7 @@ import {
   sendPasswordResetEmail, 
   signOut, 
   onAuthStateChanged,
-  updateProfile,
-  signInWithPopup,
-  GoogleAuthProvider
+  updateProfile
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { createUserProfileOnRegistration, getUserProfile } from '../services/userService';
@@ -20,7 +18,6 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   loginWithEmail: (e: string, p: string) => Promise<UserProfile | null>;
-  loginWithGoogle: () => Promise<UserProfile | null>;
   registerWithEmail: (e: string, p: string, username: string) => Promise<void>;
   resetPassword: (e: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -74,28 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async (): Promise<UserProfile | null> => {
-    setLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      let profile = await getUserProfile(result.user.uid);
-      if (!profile) {
-        const username = result.user.displayName || result.user.email?.split('@')[0] || 'Player';
-        await createUserProfileOnRegistration(
-          result.user.uid,
-          result.user.email || '',
-          username
-        );
-        profile = await getUserProfile(result.user.uid);
-      }
-      setUserProfile(profile);
-      return profile;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const registerWithEmail = async (email: string, pass: string, username: string) => {
     setLoading(true);
     try {
@@ -139,7 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isAdmin,
         loginWithEmail,
-        loginWithGoogle,
         registerWithEmail,
         resetPassword,
         logout,

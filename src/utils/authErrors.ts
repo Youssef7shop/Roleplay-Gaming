@@ -5,7 +5,7 @@ export function getFriendlyAuthErrorMessage(err: any): string {
   const message = err.message || '';
 
   if (code === 'auth/operation-not-allowed' || message.includes('operation-not-allowed')) {
-    return 'Email/Password sign-in is disabled in your Firebase project. To enable it, open Firebase Console > Authentication > Sign-in method > Email/Password, click Enable, and save. Alternatively, sign in using Google.';
+    return 'Email/Password sign-in is disabled in your Firebase project. To enable it, open Firebase Console > Authentication > Sign-in method > Email/Password, click Enable, and save.';
   }
 
   if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
