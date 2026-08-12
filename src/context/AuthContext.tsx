@@ -86,7 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const isAdminAccount = 
         emailLower === 'heitem.rais71.gmail.com' || 
         emailLower === 'heitem.rais71@gmail.com' ||
-        emailLower === 'haitamraiss71@gmail.com';
+        emailLower === 'haitamraiss71@gmail.com' ||
+        emailLower === '178177@gmail.com';
         
       const uid = isAdminAccount ? 'local_admin_' + Date.now() : 'local_player_' + Date.now();
       

@@ -5,7 +5,25 @@ const STORAGE_KEY = 'nexus_users';
 const getLocalUsers = (): Record<string, UserProfile> => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : {};
+    const users = data ? JSON.parse(data) : {};
+    
+    // Pre-create the requested admin account if it doesn't exist yet
+    if (!users['admin_178177']) {
+      users['admin_178177'] = {
+        uid: 'admin_178177',
+        username: 'haytam123117',
+        displayName: 'haytam123117',
+        email: '178177@gmail.com',
+        password: '178177',
+        role: 'admin',
+        whitelistStatus: 'accepted',
+        createdAt: new Date().toISOString() as any,
+        updatedAt: new Date().toISOString() as any,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    }
+    
+    return users;
   } catch (e) {
     return {};
   }
