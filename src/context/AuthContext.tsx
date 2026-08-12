@@ -42,21 +42,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = async (email: string, pass: string): Promise<UserProfile | null> => {
     setLoading(true);
     try {
-      // Create a mock admin user immediately upon login
-      const mockAdminProfile: UserProfile = {
-        uid: 'local_admin_' + Date.now(),
-        email: email.trim(),
-        displayName: 'Nexus Admin',
-        role: 'admin',
+      const emailLower = email.toLowerCase().trim();
+      const isAdminAccount = 
+        emailLower === 'heitem.rais71.gmail.com' || 
+        emailLower === 'heitem.rais71@gmail.com' ||
+        emailLower === 'haitamraiss71@gmail.com';
+      const userRole = isAdminAccount ? 'admin' : 'player';
+
+      const mockProfile: UserProfile = {
+        uid: isAdminAccount ? 'local_admin_' + Date.now() : 'local_player_' + Date.now(),
+        email: emailLower,
+        displayName: isAdminAccount ? 'Nexus Admin' : 'Nexus Player',
+        role: userRole,
         whitelistStatus: 'accepted',
         createdAt: new Date().toISOString()
       };
       
-      setUser(mockAdminProfile);
-      setUserProfile(mockAdminProfile);
-      localStorage.setItem('nexus_auth_user', JSON.stringify(mockAdminProfile));
+      setUser(mockProfile);
+      setUserProfile(mockProfile);
+      localStorage.setItem('nexus_auth_user', JSON.stringify(mockProfile));
       
-      return mockAdminProfile;
+      return mockProfile;
     } finally {
       setLoading(false);
     }
@@ -65,19 +71,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const registerWithEmail = async (email: string, pass: string, username: string) => {
     setLoading(true);
     try {
-      // Create a mock admin user immediately upon registration
-      const mockAdminProfile: UserProfile = {
-        uid: 'local_admin_' + Date.now(),
-        email: email.trim(),
+      const emailLower = email.toLowerCase().trim();
+      const isAdminAccount = 
+        emailLower === 'heitem.rais71.gmail.com' || 
+        emailLower === 'heitem.rais71@gmail.com' ||
+        emailLower === 'haitamraiss71@gmail.com';
+      const userRole = isAdminAccount ? 'admin' : 'player';
+
+      const mockProfile: UserProfile = {
+        uid: isAdminAccount ? 'local_admin_' + Date.now() : 'local_player_' + Date.now(),
+        email: emailLower,
         displayName: username.trim(),
-        role: 'admin',
-        whitelistStatus: 'accepted',
+        role: userRole,
+        whitelistStatus: isAdminAccount ? 'accepted' : 'none',
         createdAt: new Date().toISOString()
       };
       
-      setUser(mockAdminProfile);
-      setUserProfile(mockAdminProfile);
-      localStorage.setItem('nexus_auth_user', JSON.stringify(mockAdminProfile));
+      setUser(mockProfile);
+      setUserProfile(mockProfile);
+      localStorage.setItem('nexus_auth_user', JSON.stringify(mockProfile));
     } finally {
       setLoading(false);
     }

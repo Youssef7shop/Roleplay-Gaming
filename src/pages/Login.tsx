@@ -32,12 +32,8 @@ export const Login: React.FC = () => {
       const profile = await loginWithEmail(email, 'NexusPassword2026!@#');
       showToast('Logged in successfully!', 'success');
 
-      // Check user role for redirection
-      if (profile?.role === 'admin') {
-        navigate(ADMIN_ROUTE, { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      // Direct everyone to the website (dashboard)
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Email login error:', err);
       if (err?.code === 'auth/operation-not-allowed' || err?.message?.includes('operation-not-allowed')) {
