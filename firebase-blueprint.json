@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "users": {
+      "path": "users/{userId}",
+      "schema": {
+        "uid": "string",
+        "displayName": "string",
+        "email": "string",
+        "photoURL": "string",
+        "role": "string",
+        "createdAt": "timestamp",
+        "updatedAt": "timestamp",
+        "whitelistStatus": "string"
+      }
+    },
+    "whitelistApplications": {
+      "path": "whitelistApplications/{applicationId}",
+      "schema": {
+        "id": "string",
+        "userId": "string",
+        "fullName": "string",
+        "realAge": "number",
+        "country": "string",
+        "discordUsername": "string",
+        "email": "string",
+        "characterName": "string",
+        "characterAge": "number",
+        "characterJob": "string",
+        "customJob": "string",
+        "personality": "string",
+        "strengths": "string",
+        "weaknesses": "string",
+        "goals": "string",
+        "backstory": "string",
+        "roleplayAnswers": "object",
+        "rulesAccepted": "boolean",
+        "status": "string",
+        "submittedAt": "timestamp",
+        "reviewedAt": "timestamp",
+        "reviewedBy": "string",
+        "adminNote": "string"
+      }
+    }
+  }
+}
