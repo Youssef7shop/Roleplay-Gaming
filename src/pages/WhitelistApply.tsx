@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { JobType, RoleplayAnswers } from '../types';
 import { submitWhitelistApplication, getUserPendingApplication } from '../services/whitelistService';
+import { getServerSettings } from '../services/settingsService';
 import { Modal } from '../components/common/Modal';
 import { useToast } from '../components/common/Toast';
 
@@ -27,6 +28,7 @@ export const WhitelistApply: React.FC = () => {
   const [step, setStep] = useState<number>(1);
   const [loadingCheck, setLoadingCheck] = useState<boolean>(true);
   const [hasPending, setHasPending] = useState<boolean>(false);
+  const [isWhitelistOpen, setIsWhitelistOpen] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
@@ -64,13 +66,21 @@ export const WhitelistApply: React.FC = () => {
 
   useEffect(() => {
     const checkPending = async () => {
-      if (user?.uid) {
-        const pending = await getUserPendingApplication(user.uid);
-        if (pending) {
-          setHasPending(true);
+      try {
+        const settings = await getServerSettings();
+        setIsWhitelistOpen(settings.whitelistOpen);
+        
+        if (user?.uid) {
+          const pending = await getUserPendingApplication(user.uid);
+          if (pending) {
+            setHasPending(true);
+          }
         }
+      } catch (err) {
+        console.error('Error fetching settings or pending app:', err);
+      } finally {
+        setLoadingCheck(false);
       }
-      setLoadingCheck(false);
     };
     checkPending();
   }, [user]);
@@ -205,6 +215,28 @@ export const WhitelistApply: React.FC = () => {
       <div className="py-20 text-center text-slate-400">
         <Clock className="h-8 w-8 animate-spin mx-auto text-cyan-400 mb-2" />
         Loading application status...
+      </div>
+    );
+  }
+
+  if (!isWhitelistOpen) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-6">
+        <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-500/10 space-y-4">
+          <AlertCircle className="h-12 w-12 text-rose-400 mx-auto" />
+          <h2 className="text-2xl font-black text-rose-300 uppercase">WAITLIST CLOSED</h2>
+          <p className="text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+            The whitelist application process is currently closed. Staff are not accepting new applications at this time. Please check our Discord for updates on when applications will reopen.
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="px-6 py-3 rounded-xl bg-rose-500 text-slate-950 font-bold text-xs uppercase tracking-wider hover:bg-rose-400 transition-colors"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

@@ -17,9 +17,23 @@ import {
   Shield 
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { getServerSettings } from '../services/settingsService';
 
 export const Home: React.FC = () => {
   const { user } = useAuth();
+  const [isWhitelistOpen, setIsWhitelistOpen] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await getServerSettings();
+        setIsWhitelistOpen(settings.whitelistOpen);
+      } catch (e) {
+        console.error('Error fetching settings:', e);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const steps = [
     {
@@ -79,13 +93,22 @@ export const Home: React.FC = () => {
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             {user ? (
-              <Link
-                to="/whitelist/apply"
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-slate-950 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 flex items-center justify-center gap-3 text-base tracking-wide"
-              >
-                APPLY FOR WHITELIST NOW
-                <ChevronRight className="h-5 w-5" />
-              </Link>
+              isWhitelistOpen ? (
+                <Link
+                  to="/whitelist/apply"
+                  className="w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-slate-950 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 shadow-xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 flex items-center justify-center gap-3 text-base tracking-wide"
+                >
+                  APPLY FOR WHITELIST NOW
+                  <ChevronRight className="h-5 w-5" />
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="w-full sm:w-auto px-8 py-4 rounded-2xl font-extrabold text-rose-300 bg-rose-500/10 border border-rose-500/30 flex items-center justify-center gap-3 text-base tracking-wide cursor-not-allowed opacity-80"
+                >
+                  WAITLIST CLOSED
+                </button>
+              )
             ) : (
               <>
                 <Link
