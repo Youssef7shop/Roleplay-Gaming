@@ -8,6 +8,7 @@ export interface UserProfile {
   displayName: string;
   email: string;
   photoURL?: string;
+  password?: string;
   role: UserRole;
   isBlocked?: boolean;
   createdAt: any;

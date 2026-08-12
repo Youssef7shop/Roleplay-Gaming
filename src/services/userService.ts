@@ -26,10 +26,17 @@ export const getUserByEmail = async (email: string): Promise<UserProfile | null>
   return found || null;
 };
 
+export const getUserByUsername = async (username: string): Promise<UserProfile | null> => {
+  const users = Object.values(getLocalUsers());
+  const found = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+  return found || null;
+};
+
 export const createUserProfileOnRegistration = async (
   uid: string, 
   email: string, 
-  username: string
+  username: string,
+  password?: string
 ): Promise<UserProfile> => {
   const users = getLocalUsers();
   
@@ -38,6 +45,7 @@ export const createUserProfileOnRegistration = async (
     username: username.trim(),
     displayName: username.trim(),
     email: email.toLowerCase().trim(),
+    password,
     role: 'player',
     whitelistStatus: 'none',
     createdAt: new Date().toISOString() as any,

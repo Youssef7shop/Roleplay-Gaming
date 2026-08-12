@@ -16,6 +16,7 @@ export const Login: React.FC = () => {
   const successStateMsg = location.state?.message || '';
 
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -25,11 +26,15 @@ export const Login: React.FC = () => {
       setErrorMsg('Please enter your email.');
       return;
     }
+    if (!password) {
+      setErrorMsg('Please enter your password.');
+      return;
+    }
     setErrorMsg('');
     setSubmitting(true);
 
     try {
-      const profile = await loginWithEmail(email, 'NexusPassword2026!@#');
+      const profile = await loginWithEmail(email, password);
       showToast('Logged in successfully!', 'success');
 
       // Direct everyone to the website (dashboard)
@@ -95,6 +100,23 @@ export const Login: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
+                required
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm transition-all"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm transition-all"
               />

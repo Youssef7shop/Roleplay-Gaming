@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { UserProfile } from '../types';
-import { getUserByEmail, createUserProfileOnRegistration, promoteUserToAdmin, updateUserWhitelistStatus } from '../services/userService';
+import { getUserByEmail, createUserProfileOnRegistration, promoteUserToAdmin, updateUserWhitelistStatus, getUserByUsername } from '../services/userService';
 
 interface AuthContextType {
   user: any | null;
@@ -50,6 +50,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('User not found. Please register first.');
       }
       
+      if (profile.password && profile.password !== pass) {
+        throw new Error('Incorrect password.');
+      }
+      
       if (profile.isBlocked) {
         throw new Error('This account has been blocked by an administrator.');
       }
@@ -74,6 +78,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('An account with this email already exists.');
       }
       
+      const existingUsername = await getUserByUsername(username.trim());
+      if (existingUsername) {
+        throw new Error('An account with this name already exists.');
+      }
+      
       const isAdminAccount = 
         emailLower === 'heitem.rais71.gmail.com' || 
         emailLower === 'heitem.rais71@gmail.com' ||
@@ -81,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
       const uid = isAdminAccount ? 'local_admin_' + Date.now() : 'local_player_' + Date.now();
       
-      const newProfile = await createUserProfileOnRegistration(uid, emailLower, username);
+      const newProfile = await createUserProfileOnRegistration(uid, emailLower, username, pass);
       
       if (isAdminAccount) {
         // promote it to admin locally if it's the master admin
