@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { UserProfile } from '../types';
+import { getUserByEmail, createUserProfileOnRegistration, promoteUserToAdmin, updateUserWhitelistStatus } from '../services/userService';
 
 interface AuthContextType {
   user: any | null;
@@ -43,26 +44,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const emailLower = email.toLowerCase().trim();
-      const isAdminAccount = 
-        emailLower === 'heitem.rais71.gmail.com' || 
-        emailLower === 'heitem.rais71@gmail.com' ||
-        emailLower === 'haitamraiss71@gmail.com';
-      const userRole = isAdminAccount ? 'admin' : 'player';
-
-      const mockProfile: UserProfile = {
-        uid: isAdminAccount ? 'local_admin_' + Date.now() : 'local_player_' + Date.now(),
-        email: emailLower,
-        displayName: isAdminAccount ? 'Nexus Admin' : 'Nexus Player',
-        role: userRole,
-        whitelistStatus: 'accepted',
-        createdAt: new Date().toISOString()
-      };
       
-      setUser(mockProfile);
-      setUserProfile(mockProfile);
-      localStorage.setItem('nexus_auth_user', JSON.stringify(mockProfile));
+      const profile = await getUserByEmail(emailLower);
+      if (!profile) {
+        throw new Error('User not found. Please register first.');
+      }
       
-      return mockProfile;
+      if (profile.isBlocked) {
+        throw new Error('This account has been blocked by an administrator.');
+      }
+      
+      setUser(profile);
+      setUserProfile(profile);
+      localStorage.setItem('nexus_auth_user', JSON.stringify(profile));
+      
+      return profile;
     } finally {
       setLoading(false);
     }
@@ -72,24 +68,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const emailLower = email.toLowerCase().trim();
+      
+      const existing = await getUserByEmail(emailLower);
+      if (existing) {
+        throw new Error('An account with this email already exists.');
+      }
+      
       const isAdminAccount = 
         emailLower === 'heitem.rais71.gmail.com' || 
         emailLower === 'heitem.rais71@gmail.com' ||
         emailLower === 'haitamraiss71@gmail.com';
-      const userRole = isAdminAccount ? 'admin' : 'player';
-
-      const mockProfile: UserProfile = {
-        uid: isAdminAccount ? 'local_admin_' + Date.now() : 'local_player_' + Date.now(),
-        email: emailLower,
-        displayName: username.trim(),
-        role: userRole,
-        whitelistStatus: isAdminAccount ? 'accepted' : 'none',
-        createdAt: new Date().toISOString()
-      };
+        
+      const uid = isAdminAccount ? 'local_admin_' + Date.now() : 'local_player_' + Date.now();
       
-      setUser(mockProfile);
-      setUserProfile(mockProfile);
-      localStorage.setItem('nexus_auth_user', JSON.stringify(mockProfile));
+      const newProfile = await createUserProfileOnRegistration(uid, emailLower, username);
+      
+      if (isAdminAccount) {
+        // promote it to admin locally if it's the master admin
+        await promoteUserToAdmin(uid);
+        await updateUserWhitelistStatus(uid, 'accepted');
+        newProfile.role = 'admin';
+        newProfile.whitelistStatus = 'accepted';
+      }
+      
+      setUser(newProfile);
+      setUserProfile(newProfile);
+      localStorage.setItem('nexus_auth_user', JSON.stringify(newProfile));
     } finally {
       setLoading(false);
     }

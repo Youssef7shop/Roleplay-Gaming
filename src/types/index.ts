@@ -9,6 +9,7 @@ export interface UserProfile {
   email: string;
   photoURL?: string;
   role: UserRole;
+  isBlocked?: boolean;
   createdAt: any;
   updatedAt: any;
   whitelistStatus: WhitelistStatus;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Users, ShieldAlert, ShieldCheck, Mail, Calendar, Key, Search, UserMinus } from 'lucide-react';
+import { Users, ShieldAlert, ShieldCheck, Mail, Calendar, Key, Search, UserMinus, Ban, Unlock } from 'lucide-react';
 import { UserProfile } from '../../types';
-import { getAllUsers, promoteUserToAdmin, demoteAdminToPlayer } from '../../services/userService';
+import { getAllUsers, promoteUserToAdmin, demoteAdminToPlayer, toggleUserBlockStatus } from '../../services/userService';
 import { StatusBadge } from '../../components/common/Badge';
 import { formatDate } from '../../utils/formatters';
 import { useToast } from '../../components/common/Toast';
@@ -52,6 +52,24 @@ export const AdminUsers: React.FC = () => {
       } catch (err: any) {
         console.error('Error demoting user:', err);
         showToast('Failed to demote user.', 'error');
+      }
+    }
+  };
+
+  const handleToggleBlock = async (uid: string, name: string, isBlocked: boolean) => {
+    if (uid === currentUser?.uid) {
+      showToast('You cannot block yourself!', 'warning');
+      return;
+    }
+    const actionStr = isBlocked ? 'block' : 'unblock';
+    if (window.confirm(`Are you sure you want to ${actionStr} ${name}?`)) {
+      try {
+        await toggleUserBlockStatus(uid, isBlocked);
+        showToast(`Successfully ${actionStr}ed ${name}.`, 'success');
+        fetchUsers();
+      } catch (err: any) {
+        console.error(`Error ${actionStr}ing user:`, err);
+        showToast(`Failed to ${actionStr} user.`, 'error');
       }
     }
   };
@@ -117,7 +135,14 @@ export const AdminUsers: React.FC = () => {
                   filteredUsers.map((usr) => (
                     <tr key={usr.uid} className="hover:bg-slate-800/40 transition-colors">
                       <td className="py-4 px-5">
-                        <div className="font-bold text-slate-100">{usr.username || usr.displayName || 'Player'}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-bold text-slate-100">{usr.username || usr.displayName || 'Player'}</div>
+                          {usr.isBlocked && (
+                            <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[9px] font-bold uppercase tracking-widest border border-rose-500/30">
+                              Blocked
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[10px] text-slate-500 font-mono">UID: {usr.uid.substring(0, 8)}...</div>
                       </td>
                       <td className="py-4 px-5 text-slate-300 font-medium">{usr.email}</td>
@@ -137,25 +162,47 @@ export const AdminUsers: React.FC = () => {
                       </td>
                       <td className="py-4 px-5 text-slate-400">{formatDate(usr.createdAt)}</td>
                       <td className="py-4 px-5 text-right">
-                        {usr.role !== 'admin' ? (
-                          <button
-                            onClick={() => handlePromote(usr.uid, usr.username || usr.displayName)}
-                            className="px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-bold transition-all flex items-center gap-1.5 ml-auto"
-                          >
-                            <Key className="h-3.5 w-3.5" />
-                            Promote to Admin
-                          </button>
-                        ) : (
-                          usr.uid !== currentUser?.uid && (
+                        <div className="flex items-center justify-end gap-2">
+                          {usr.isBlocked ? (
                             <button
-                              onClick={() => handleDemote(usr.uid, usr.username || usr.displayName)}
-                              className="px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-[11px] font-bold transition-all flex items-center gap-1.5 ml-auto"
+                              onClick={() => handleToggleBlock(usr.uid, usr.username || usr.displayName, false)}
+                              className="px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[11px] font-bold transition-all flex items-center gap-1.5"
                             >
-                              <UserMinus className="h-3.5 w-3.5" />
-                              Demote to Player
+                              <Unlock className="h-3.5 w-3.5" />
+                              Unblock
                             </button>
-                          )
-                        )}
+                          ) : (
+                            usr.uid !== currentUser?.uid && (
+                              <button
+                                onClick={() => handleToggleBlock(usr.uid, usr.username || usr.displayName, true)}
+                                className="px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-[11px] font-bold transition-all flex items-center gap-1.5"
+                              >
+                                <Ban className="h-3.5 w-3.5" />
+                                Block
+                              </button>
+                            )
+                          )}
+                          
+                          {usr.role !== 'admin' ? (
+                            <button
+                              onClick={() => handlePromote(usr.uid, usr.username || usr.displayName)}
+                              className="px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-bold transition-all flex items-center gap-1.5"
+                            >
+                              <Key className="h-3.5 w-3.5" />
+                              Promote
+                            </button>
+                          ) : (
+                            usr.uid !== currentUser?.uid && (
+                              <button
+                                onClick={() => handleDemote(usr.uid, usr.username || usr.displayName)}
+                                className="px-3 py-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 text-[11px] font-bold transition-all flex items-center gap-1.5"
+                              >
+                                <UserMinus className="h-3.5 w-3.5" />
+                                Demote
+                              </button>
+                            )
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

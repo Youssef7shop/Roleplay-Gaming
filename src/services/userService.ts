@@ -20,6 +20,12 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
   return users[uid] || null;
 };
 
+export const getUserByEmail = async (email: string): Promise<UserProfile | null> => {
+  const users = Object.values(getLocalUsers());
+  const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  return found || null;
+};
+
 export const createUserProfileOnRegistration = async (
   uid: string, 
   email: string, 
@@ -89,6 +95,15 @@ export const demoteAdminToPlayer = async (uid: string): Promise<void> => {
   const users = getLocalUsers();
   if (users[uid]) {
     users[uid].role = 'player';
+    users[uid].updatedAt = new Date().toISOString() as any;
+    saveLocalUsers(users);
+  }
+};
+
+export const toggleUserBlockStatus = async (uid: string, isBlocked: boolean): Promise<void> => {
+  const users = getLocalUsers();
+  if (users[uid]) {
+    users[uid].isBlocked = isBlocked;
     users[uid].updatedAt = new Date().toISOString() as any;
     saveLocalUsers(users);
   }
