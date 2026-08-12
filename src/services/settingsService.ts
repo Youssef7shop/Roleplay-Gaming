@@ -52,8 +52,7 @@ export const getServerSettings = async (): Promise<ServerSettings> => {
     if (snap.exists()) {
       return { ...DEFAULT_SETTINGS, ...snap.data() } as ServerSettings;
     }
-    // Initialize default settings if doc does not exist
-    await setDoc(docRef, { ...DEFAULT_SETTINGS, updatedAt: serverTimestamp() });
+    // Return default settings if doc does not exist
     return DEFAULT_SETTINGS;
   } catch (error) {
     console.error('Error fetching server settings:', error);

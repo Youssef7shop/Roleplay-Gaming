@@ -18,7 +18,8 @@ service cloud.firestore {
       return isAuthenticated() && (
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          getUserData().role == 'admin') ||
-        request.auth.token.admin == true
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'haitamraiss71@gmail.com'
       );
     }
 
@@ -45,7 +46,7 @@ service cloud.firestore {
     }
 
     // Server Settings (whitelist open/close state, etc)
-    match /serverSettings/{docId} {
+    match /settings/{docId} {
       allow read: if true; // Public read so applicants know if whitelist is open
       allow write: if isAdmin();
     }
