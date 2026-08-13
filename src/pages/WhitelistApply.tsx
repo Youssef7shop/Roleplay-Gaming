@@ -16,7 +16,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { JobType, RoleplayAnswers } from '../types';
 import { submitWhitelistApplication, getUserPendingApplication } from '../services/whitelistService';
-import { getServerSettings } from '../services/settingsService';
+import { getServerSettings, subscribeToServerSettings } from '../services/settingsService';
 import { Modal } from '../components/common/Modal';
 import { useToast } from '../components/common/Toast';
 
@@ -65,10 +65,13 @@ export const WhitelistApply: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    let unsubscribe = () => {};
+    
     const checkPending = async () => {
       try {
-        const settings = await getServerSettings();
-        setIsWhitelistOpen(settings.whitelistOpen);
+        unsubscribe = subscribeToServerSettings((settings) => {
+          setIsWhitelistOpen(settings.whitelistOpen);
+        });
         
         if (user?.uid) {
           const pending = await getUserPendingApplication(user.uid);
@@ -82,7 +85,10 @@ export const WhitelistApply: React.FC = () => {
         setLoadingCheck(false);
       }
     };
+    
     checkPending();
+    
+    return () => unsubscribe();
   }, [user]);
 
   const handleRpChange = (field: keyof RoleplayAnswers, value: string) => {

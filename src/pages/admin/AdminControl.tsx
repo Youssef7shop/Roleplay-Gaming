@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Power, Sliders, Save, CheckCircle2, AlertCircle } from 'lucide-react';
-import { getServerSettings, updateServerSettings, setWhitelistOpenStatus, ServerSettings } from '../../services/settingsService';
+import { getServerSettings, subscribeToServerSettings, updateServerSettings, setWhitelistOpenStatus, ServerSettings } from '../../services/settingsService';
 import { useToast } from '../../components/common/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { CardSkeleton } from '../../components/common/Skeleton';
@@ -14,12 +14,12 @@ export const AdminControl: React.FC = () => {
   const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchConfig = async () => {
-      const config = await getServerSettings();
+    const unsubscribe = subscribeToServerSettings((config) => {
       setSettings(config);
       setLoading(false);
-    };
-    fetchConfig();
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   const handleToggle = async () => {

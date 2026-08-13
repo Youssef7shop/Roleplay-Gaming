@@ -15,7 +15,7 @@ import {
 import { WhitelistApplication } from '../../types';
 import { getAllApplications } from '../../services/whitelistService';
 import { getAllUsers } from '../../services/userService';
-import { getServerSettings, setWhitelistOpenStatus, ServerSettings } from '../../services/settingsService';
+import { getServerSettings, subscribeToServerSettings, setWhitelistOpenStatus, ServerSettings } from '../../services/settingsService';
 import { formatDate } from '../../utils/formatters';
 import { CardSkeleton } from '../../components/common/Skeleton';
 import { useToast } from '../../components/common/Toast';
@@ -34,19 +34,23 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [applications, usersList, serverConfig] = await Promise.all([
+    const [applications, usersList] = await Promise.all([
       getAllApplications(),
       getAllUsers(),
-      getServerSettings(),
     ]);
     setApps(applications);
     setTotalUsers(usersList.length);
-    setSettings(serverConfig);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
+    
+    const unsubscribe = subscribeToServerSettings((config) => {
+      setSettings(config);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   const totalApps = apps.length;

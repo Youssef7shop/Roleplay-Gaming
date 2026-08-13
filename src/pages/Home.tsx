@@ -17,22 +17,18 @@ import {
   Shield 
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getServerSettings } from '../services/settingsService';
+import { getServerSettings, subscribeToServerSettings } from '../services/settingsService';
 
 export const Home: React.FC = () => {
   const { user } = useAuth();
   const [isWhitelistOpen, setIsWhitelistOpen] = React.useState<boolean>(true);
 
   React.useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const settings = await getServerSettings();
-        setIsWhitelistOpen(settings.whitelistOpen);
-      } catch (e) {
-        console.error('Error fetching settings:', e);
-      }
-    };
-    fetchSettings();
+    const unsubscribe = subscribeToServerSettings((settings) => {
+      setIsWhitelistOpen(settings.whitelistOpen);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   const steps = [
