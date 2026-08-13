@@ -16,6 +16,7 @@ import { Profile } from './pages/Profile';
 import { WhitelistApply } from './pages/WhitelistApply';
 import { WhitelistView } from './pages/WhitelistView';
 
+import { Booking } from './pages/Booking';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminApplications } from './pages/admin/AdminApplications';
 import { AdminApplicationDossier } from './pages/admin/AdminApplicationDossier';
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
             <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
             <Route path="/forgot-password" element={<MainLayout><ForgotPassword /></MainLayout>} />
+            <Route path="/booking" element={<MainLayout><Booking /></MainLayout>} />
 
             {/* Authenticated Player Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />

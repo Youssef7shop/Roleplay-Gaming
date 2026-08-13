@@ -63,6 +63,16 @@ export const Navbar: React.FC = () => {
             >
               Home
             </Link>
+            <Link
+              to="/booking"
+              className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                isActive('/booking') 
+                  ? 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/20' 
+                  : 'text-slate-300 hover:text-slate-100 hover:bg-slate-900'
+              }`}
+            >
+              Booking
+            </Link>
 
             {user && (
               <>
@@ -179,6 +189,13 @@ export const Navbar: React.FC = () => {
             className="block px-3 py-2 rounded-lg text-base font-medium text-slate-300 hover:bg-slate-900"
           >
             Home
+          </Link>
+          <Link
+            to="/booking"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-300 hover:bg-slate-900"
+          >
+            Booking
           </Link>
 
           {user ? (
